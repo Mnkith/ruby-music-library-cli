@@ -1,13 +1,11 @@
-require 'artist.rb'
-class Song
+class Song extend Concerns::Findable
     @@all = []
     attr_accessor :name
-    attr_reader :artist
-    def initialize(name, artist = nil)
-        @name = name 
-        
+    attr_reader :artist, :genre
+    def initialize(name, artist = nil, genre = nil)
+        @name = name
         self.artist = artist
-        # @artist = artist
+        self.genre = genre if genre
         save
     end
 
@@ -28,11 +26,31 @@ class Song
     end
 
     def artist=(artist)
-        artist.add_song(self)  if artist != nil
+        if artist
+            @artist = artist
+            artist.add_song(self)
+        end
+    end
+
+    def genre=(genre)
+        @genre = genre 
+        genre.songs << self unless genre.songs.include?(self)
     end
 
     def artist1(artist)
         @artist = artist
+    end
+
+    def self.new_from_filename(filename)
+        info = filename.split(/[-.]/)
+        song = find_or_create_by_name(info[1].strip)
+        song.artist = Artist.find_or_create_by_name(info[0].strip)
+        song.genre = Genre.find_or_create_by_name(info[2].strip)
+        song
+    end
+
+    def self.create_from_filename(filename)
+        new_from_filename(filename)
     end
 end
 
